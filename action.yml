@@ -2,10 +2,18 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  milliseconds: # change this
+  commit_log:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'commit log'
+    default: ''
+  style:
+    required: true
+    description: 'Decide what style you would like to use'
+    default: 'angular'
+  scopes:
+    required: false
+    description: 'ビルドに含めたいスコープをここに入れます'
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'

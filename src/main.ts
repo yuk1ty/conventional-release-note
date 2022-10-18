@@ -1,16 +1,22 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {assert} from 'console'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const commit_log = core.getInput('commit_log')
+    const style = core.getInput('style')
+    const scopes = core.getMultilineInput('scopes')
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    console.log(commit_log)
+    console.log(style)
+    console.log(scopes.toString())
+    // core.debug(commit_log)
+    // core.debug(style)
+    // core.debug(scopes.toString())
 
-    core.setOutput('time', new Date().toTimeString())
+    assert(commit_log === 'feat: add new module!')
+    assert(style === 'angular')
+    assert(scopes.toString() === '(empty)')
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
