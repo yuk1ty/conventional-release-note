@@ -51,10 +51,41 @@ describe('generateReleaseNote function', () => {
         IO.of(
           expect(result).toMatch(`## Features
 * feat: add a new feature
-* feat: add another feature## Bug Fixes
+* feat: add another feature
+## Bug Fixes
 * fix a bug`)
         )
       )
+    )
+    runTest()
+  })
+
+  test('only returns Release Note including features', () => {
+    const docs = [
+      {
+        title: 'Features',
+        content: '* feat: add a new feature\n* feat: add another feature'
+      }
+    ]
+    const runTest = pipe(
+      IO.Do,
+      IO.bind('result', () => generateReleaseNote(docs)),
+      IO.chainFirst(({result}) =>
+        IO.of(
+          expect(result).toMatch(`## Features
+* feat: add a new feature
+* feat: add another feature`)
+        )
+      )
+    )
+    runTest()
+  })
+
+  test('returns Release Note with no content', () => {
+    const runTest = pipe(
+      IO.Do,
+      IO.bind('result', () => generateReleaseNote([])),
+      IO.chainFirst(({result}) => IO.of(expect(result).toStrictEqual('')))
     )
     runTest()
   })

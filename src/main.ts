@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {some} from 'fp-ts/Option'
+import * as Option from 'fp-ts/Option'
 import * as Either from 'fp-ts/Either'
 import * as TaskEither from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
@@ -13,9 +13,13 @@ async function run(): Promise<void> {
       TaskEither.of(core.getInput('commit_log'))
     ),
     TaskEither.bind('style', () => TaskEither.of(core.getInput('style'))),
-    TaskEither.bind('scopes', () => TaskEither.of(core.getInput('scopes'))),
+    TaskEither.bind('scopes', () =>
+      TaskEither.of(Option.of(core.getInput('scopes')))
+    ),
     TaskEither.chain(({commit_log, style, scopes}) =>
-      TaskEither.fromIO(categorize(commit_log.split(','), some(scopes)))
+      TaskEither.fromIO(
+        categorize(commit_log.split('\n'), Option.filter(s => s !== '')(scopes))
+      )
     ),
     TaskEither.bindTo('categorized'),
     TaskEither.chain(({categorized}) =>
@@ -30,7 +34,7 @@ async function run(): Promise<void> {
         core.setFailed(err.message)
       }
     },
-    val => console.log(val)
+    val => core.setOutput('summary', val)
   )(await program())
 }
 

@@ -1,10 +1,10 @@
-name: 'build-test'
+name: "build-test"
 on: # rebuild any PRs and main branch changes
   pull_request:
   push:
     branches:
       - main
-      - 'releases/*'
+      - "releases/*"
 
 jobs:
   build: # make sure build/ci work properly
@@ -20,9 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./
+        id: gen_note
         with:
-          commit_log: 'feat: add new module!'
+          commit_log: "feat: add new module!\nfeat: add another module\n"
           style: angular
-          scopes: |
-            frontend
-            backend
+      - name: print result
+        run: echo "${{ steps.gen_note.outputs.summary }}"

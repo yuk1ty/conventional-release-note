@@ -24,6 +24,8 @@ const filterLogBy =
 export const categorize = (logs: string[], scope: Option<string>) => {
   return pipe(
     IO.Do,
+    IO.chain(() => IO.of(console.log(logs))),
+    IO.chain(() => IO.of(console.log(scope))),
     IO.bind('feat', () => IO.of(logs.filter(filterLogBy(scope, 'feat')))),
     IO.bind('fix', () => IO.of(logs.filter(filterLogBy(scope, 'fix')))),
     IO.chain(({feat, fix}) =>
