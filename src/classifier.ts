@@ -3,7 +3,7 @@ import * as IO from 'fp-ts/IO'
 import * as S from 'fp-ts/string'
 import {pipe} from 'fp-ts/lib/function'
 
-type CategorizedSummary = {
+export type CategorizedSummary = {
   feat: string[]
   fix: string[]
 }
