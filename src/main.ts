@@ -1,25 +1,37 @@
 import * as core from '@actions/core'
-import {assert} from 'console'
+import {some} from 'fp-ts/Option'
+import * as Either from 'fp-ts/Either'
+import * as TaskEither from 'fp-ts/TaskEither'
+import {pipe} from 'fp-ts/lib/function'
+import {categorize} from './classifier'
+import {generateDoc, generateReleaseNote} from './generator'
 
 async function run(): Promise<void> {
-  try {
-    const commit_log = core.getInput('commit_log')
-    const style = core.getInput('style')
-    const scopes = core.getMultilineInput('scopes')
-
-    console.log(commit_log)
-    console.log(style)
-    console.log(scopes.toString())
-    // core.debug(commit_log)
-    // core.debug(style)
-    // core.debug(scopes.toString())
-
-    assert(commit_log === 'feat: add new module!')
-    assert(style === 'angular')
-    assert(scopes.toString() === '(empty)')
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
-  }
+  const program = pipe(
+    TaskEither.Do,
+    TaskEither.bind('commit_log', () =>
+      TaskEither.of(core.getInput('commit_log'))
+    ),
+    TaskEither.bind('style', () => TaskEither.of(core.getInput('style'))),
+    TaskEither.bind('scopes', () => TaskEither.of(core.getInput('scopes'))),
+    TaskEither.chain(({commit_log, style, scopes}) =>
+      TaskEither.fromIO(categorize(commit_log.split(','), some(scopes)))
+    ),
+    TaskEither.bindTo('categorized'),
+    TaskEither.chain(({categorized}) =>
+      TaskEither.fromIO(generateDoc(categorized))
+    ),
+    TaskEither.bindTo('docs'),
+    TaskEither.chain(({docs}) => TaskEither.fromIO(generateReleaseNote(docs)))
+  )
+  Either.match(
+    err => {
+      if (err instanceof Error) {
+        core.setFailed(err.message)
+      }
+    },
+    val => console.log(val)
+  )(await program())
 }
 
 run()
