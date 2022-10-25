@@ -9,7 +9,7 @@ type Doc = {
 }
 
 export const generateDoc = (source: CategorizedSummary) => {
-  pipe(
+  return pipe(
     IO.Do,
     IO.bind('feat', () =>
       IO.of({
@@ -28,8 +28,8 @@ export const generateDoc = (source: CategorizedSummary) => {
 }
 
 export const generateReleaseNote = (source: Doc[]) => {
-  IO.of(
-    Array.reduceRight('', (cur: Doc, acc: string) => {
+  return IO.of(
+    Array.reduce('', (acc: string, cur: Doc) => {
       const block = `## ${cur.title}\n${cur.content}`
       return acc + block
     })(source)
