@@ -1,13 +1,11 @@
 name: "build-test"
-on: # rebuild any PRs and main branch changes
-  pull_request:
+on:
   push:
-    branches:
-      - main
-      - "releases/*"
+    tags:
+      - "v*"
 
 jobs:
-  build: # make sure build/ci work properly
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,14 +13,13 @@ jobs:
           npm install
       - run: |
           npm run all
-  test: # make sure the action works on a clean machine without building
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./
         id: gen_note
         with:
-          commit_log: "feat: add new module!\nfeat: add another module\n"
           style: angular
-      - name: print result
+      - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
