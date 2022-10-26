@@ -14,11 +14,14 @@ async function run(): Promise<void> {
     ),
     TaskEither.bind('style', () => TaskEither.of(core.getInput('style'))),
     TaskEither.bind('scopes', () =>
-      TaskEither.of(Option.of(core.getInput('scopes')))
+      TaskEither.of(Option.of(core.getMultilineInput('scopes')))
     ),
     TaskEither.chain(({commit_log, style, scopes}) =>
       TaskEither.fromIO(
-        categorize(commit_log.split('\n'), Option.filter(s => s !== '')(scopes))
+        categorize(
+          commit_log.split('\n'),
+          Option.filter((s: string[]) => s.length != 0)(scopes)
+        )
       )
     ),
     TaskEither.bindTo('categorized'),

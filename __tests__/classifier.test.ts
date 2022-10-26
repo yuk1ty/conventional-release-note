@@ -35,11 +35,37 @@ describe('categorize function', () => {
 
     const runTest = pipe(
       IO.Do,
-      IO.bind('result', () => categorize(logs, some('data'))),
+      IO.bind('result', () => categorize(logs, some(['data']))),
       IO.chain(({result}) =>
         IO.of(
           expect(result).toStrictEqual({
             feat: ['feat(data): add a new feature'],
+            fix: ['fix(data): fix a bug']
+          })
+        )
+      )
+    )
+    runTest()
+  })
+
+  test('categorize commits with multiple scopes', () => {
+    const logs = [
+      'feat(data): add a new feature',
+      'fix(data): fix a bug',
+      'feat(other): add another feature',
+      'fix(another): not include this'
+    ]
+
+    const runTest = pipe(
+      IO.Do,
+      IO.bind('result', () => categorize(logs, some(['data', 'other']))),
+      IO.chain(({result}) =>
+        IO.of(
+          expect(result).toStrictEqual({
+            feat: [
+              'feat(data): add a new feature',
+              'feat(other): add another feature'
+            ],
             fix: ['fix(data): fix a bug']
           })
         )
