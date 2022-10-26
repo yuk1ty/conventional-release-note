@@ -1,6 +1,6 @@
 import {CategorizedSummary} from './classifier'
 import * as Writer from 'fp-ts/Writer'
-import * as IO from 'fp-ts/IO'
+import * as TE from 'fp-ts/TaskEither'
 import * as Array from 'fp-ts/Array'
 import {pipe} from 'fp-ts/lib/function'
 
@@ -32,12 +32,12 @@ export const generateDoc = (source: CategorizedSummary) => {
         Writer.tell(appendIfNeeded(source.fix, 'Bug Fixes'))
       ),
     writer => Writer.execute(writer),
-    docs => IO.of(docs)
+    docs => TE.of(docs)
   )
 }
 
 export const generateReleaseNote = (source: Doc[]) => {
-  return IO.of(
+  return TE.of(
     Array.reduce('', (acc: string, cur: Doc) => {
       const block = `## ${cur.title}\n${cur.content}\n`
       return acc + block

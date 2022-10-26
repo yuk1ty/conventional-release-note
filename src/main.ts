@@ -45,19 +45,13 @@ async function run(): Promise<void> {
       TaskEither.of(Option.of(core.getMultilineInput('scopes')))
     ),
     TaskEither.chain(({commitLog, style, scopes}) =>
-      TaskEither.fromIO(
-        categorize(
-          commitLog.split('\n'),
-          Option.filter((s: string[]) => s.length != 0)(scopes)
-        )
+      categorize(
+        commitLog.split('\n'),
+        Option.filter((s: string[]) => s.length != 0)(scopes)
       )
     ),
-    TaskEither.bindTo('categorized'),
-    TaskEither.chain(({categorized}) =>
-      TaskEither.fromIO(generateDoc(categorized))
-    ),
-    TaskEither.bindTo('docs'),
-    TaskEither.chain(({docs}) => TaskEither.fromIO(generateReleaseNote(docs)))
+    TaskEither.chain(generateDoc),
+    TaskEither.chain(generateReleaseNote)
   )
   Either.match(
     err => {

@@ -1,20 +1,20 @@
-import * as IO from 'fp-ts/IO'
+import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 import {expect, test, describe} from '@jest/globals'
 import {generateDoc, generateReleaseNote} from '../src/generator'
 
 describe('generateDoc function', () => {
-  test('returns specific Doc array', () => {
+  test('returns specific Doc array', async () => {
     const summary = {
       feat: ['feat: add a new feature', 'feat: add another feature'],
       fix: ['fix a bug']
     }
 
     const runTest = pipe(
-      IO.Do,
-      IO.bind('result', () => generateDoc(summary)),
-      IO.chain(({result}) =>
-        IO.of(
+      TE.Do,
+      TE.bind('result', () => generateDoc(summary)),
+      TE.chain(({result}) =>
+        TE.of(
           expect(result).toStrictEqual([
             {
               title: 'Features',
@@ -28,12 +28,12 @@ describe('generateDoc function', () => {
         )
       )
     )
-    runTest()
+    await runTest()
   })
 })
 
 describe('generateReleaseNote function', () => {
-  test('returns specific Release Note', () => {
+  test('returns specific Release Note', async () => {
     const docs = [
       {
         title: 'Features',
@@ -45,10 +45,10 @@ describe('generateReleaseNote function', () => {
       }
     ]
     const runTest = pipe(
-      IO.Do,
-      IO.bind('result', () => generateReleaseNote(docs)),
-      IO.chainFirst(({result}) =>
-        IO.of(
+      TE.Do,
+      TE.bind('result', () => generateReleaseNote(docs)),
+      TE.chainFirst(({result}) =>
+        TE.of(
           expect(result).toMatch(`## Features
 * feat: add a new feature
 * feat: add another feature
@@ -57,10 +57,10 @@ describe('generateReleaseNote function', () => {
         )
       )
     )
-    runTest()
+    await runTest()
   })
 
-  test('only returns Release Note including features', () => {
+  test('only returns Release Note including features', async () => {
     const docs = [
       {
         title: 'Features',
@@ -68,25 +68,25 @@ describe('generateReleaseNote function', () => {
       }
     ]
     const runTest = pipe(
-      IO.Do,
-      IO.bind('result', () => generateReleaseNote(docs)),
-      IO.chainFirst(({result}) =>
-        IO.of(
+      TE.Do,
+      TE.bind('result', () => generateReleaseNote(docs)),
+      TE.chainFirst(({result}) =>
+        TE.of(
           expect(result).toMatch(`## Features
 * feat: add a new feature
 * feat: add another feature`)
         )
       )
     )
-    runTest()
+    await runTest()
   })
 
-  test('returns Release Note with no content', () => {
+  test('returns Release Note with no content', async () => {
     const runTest = pipe(
-      IO.Do,
-      IO.bind('result', () => generateReleaseNote([])),
-      IO.chainFirst(({result}) => IO.of(expect(result).toStrictEqual('')))
+      TE.Do,
+      TE.bind('result', () => generateReleaseNote([])),
+      TE.chainFirst(({result}) => TE.of(expect(result).toStrictEqual('')))
     )
-    runTest()
+    await runTest()
   })
 })

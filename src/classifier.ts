@@ -1,7 +1,7 @@
-import {Option, fromNullable, filter, isSome, isNone, getEq} from 'fp-ts/Option'
-import * as IO from 'fp-ts/IO'
+import {Option, fromNullable, filter, isSome, isNone} from 'fp-ts/Option'
+import * as TE from 'fp-ts/TaskEither'
 import * as S from 'fp-ts/string'
-import {pipe} from 'fp-ts/lib/function'
+import {pipe, flow} from 'fp-ts/lib/function'
 
 export type CategorizedSummary = {
   feat: string[]
@@ -31,13 +31,11 @@ const filterLogBy =
 
 export const categorize = (logs: string[], scope: Option<string[]>) => {
   return pipe(
-    IO.Do,
-    IO.chain(() => IO.of(console.log(logs))),
-    IO.chain(() => IO.of(console.log(scope))),
-    IO.bind('feat', () => IO.of(logs.filter(filterLogBy(scope, 'feat')))),
-    IO.bind('fix', () => IO.of(logs.filter(filterLogBy(scope, 'fix')))),
-    IO.chain(({feat, fix}) =>
-      IO.of({
+    TE.Do,
+    TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))),
+    TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))),
+    TE.chain(({feat, fix}) =>
+      TE.right({
         feat: feat,
         fix: fix
       })
