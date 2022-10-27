@@ -1,57 +1,38 @@
 import * as core from '@actions/core'
-import * as exec from '@actions/exec'
-import {ExecOptions} from '@actions/exec'
 import * as Option from 'fp-ts/Option'
 import * as Either from 'fp-ts/Either'
-import * as TaskEither from 'fp-ts/TaskEither'
+import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 import {categorize} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
-
-const execute = (command: string) => {
-  let output = ''
-  const options: ExecOptions = {}
-  options.listeners = {
-    stdout: (data: Buffer) => {
-      output += data.toString()
-    },
-    stderr: (data: Buffer) => {
-      console.error(data)
-    }
-  }
-  Promise.resolve(exec.exec(command, [], options))
-  return TaskEither.of(output)
-}
+import {execute, liftStringToOption, makeTagRange} from './utils'
 
 async function run(): Promise<void> {
-  const program = pipe(
-    TaskEither.Do,
-    TaskEither.bind('newTag', () => TaskEither.of(core.getInput('ref'))),
-    TaskEither.bind('preTag', () =>
-      execute('/bin/bash -c "git tag --sort=-creatordate | sed -n 2p"')
-    ),
-    TaskEither.chain(({newTag, preTag}) =>
+  const program: TE.TaskEither<Error, string> = pipe(
+    TE.Do,
+    TE.bind('tagRange', () => {
+      return makeTagRange(
+        liftStringToOption(core.getInput('ref')),
+        liftStringToOption(core.getInput('preTag'))
+      )
+    }),
+    TE.chain(({tagRange}) =>
       execute(
-        `git log --oneline --pretty=tformat:"%s by %an in %h" ${preTag.trim()}..${newTag}`
+        `git log --oneline --pretty=tformat:"%s by @%an in %h" ${tagRange}`
       )
     ),
-    TaskEither.bindTo('commitLog'),
-    TaskEither.bind('commit_log', () =>
-      TaskEither.of(core.getInput('commit_log'))
-    ),
+    TE.bindTo('commitLog'),
     // TODO now can accept only "angular"
-    TaskEither.bind('style', () => TaskEither.of(core.getInput('style'))),
-    TaskEither.bind('scopes', () =>
-      TaskEither.of(Option.of(core.getMultilineInput('scopes')))
-    ),
-    TaskEither.chain(({commitLog, style, scopes}) =>
+    TE.bind('style', () => TE.of(core.getInput('style'))),
+    TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))),
+    TE.chain(({commitLog, style, scopes}) =>
       categorize(
         commitLog.split('\n'),
         Option.filter((s: string[]) => s.length != 0)(scopes)
       )
     ),
-    TaskEither.chain(generateDoc),
-    TaskEither.chain(generateReleaseNote)
+    TE.chain(generateDoc),
+    TE.chain(generateReleaseNote)
   )
   Either.match(
     err => {

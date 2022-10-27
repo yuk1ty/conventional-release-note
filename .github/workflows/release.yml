@@ -1,0 +1,28 @@
+name: "Create a new release note"
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  create-release-note:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generated content
+        uses: ./
+        id: gen_note
+        with:
+          style: angular
+      - name: Print the release note
+        run: echo "${{ steps.gen_note.outputs.summary }}"
+      - name: Create a new release note
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.this_tag.outputs.VERSION }}
+          name: Release ${{ steps.this_tag.outputs.VERSION }}
+          body: ${{ steps.gen_note.outputs.summary }}
+          draft: false
+          prerelease: false

@@ -1,10 +1,10 @@
-name: 'Your name here'
+name: "Your name here"
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  commit_log:
+  preTag:
     required: true
-    description: 'commit log'
+    description: 'A tag before the latest tag. This is normally generated via Git command. Please see README.'
     default: ''
   style:
     required: true
@@ -12,7 +12,7 @@ inputs:
     default: 'angular'
   scopes:
     required: false
-    description: 'ビルドに含めたいスコープをここに入れます'
+    description: 'Scopes you would like to include'
     default: ''
 runs:
   using: 'node16'

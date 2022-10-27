@@ -24,7 +24,9 @@ const appendIfNeeded = (appender: string[], title: string) => {
 
 const w = Writer.getChain<Doc[]>(Array.getMonoid())
 
-export const generateDoc = (source: CategorizedSummary) => {
+export const generateDoc = (
+  source: CategorizedSummary
+): TE.TaskEither<Error, Doc[]> => {
   return pipe(
     Writer.tell(appendIfNeeded(source.feat, 'Features')),
     writer =>
@@ -36,7 +38,9 @@ export const generateDoc = (source: CategorizedSummary) => {
   )
 }
 
-export const generateReleaseNote = (source: Doc[]) => {
+export const generateReleaseNote = (
+  source: Doc[]
+): TE.TaskEither<Error, string> => {
   return TE.of(
     Array.reduce('', (acc: string, cur: Doc) => {
       const block = `## ${cur.title}\n${cur.content}\n`
