@@ -180,7 +180,7 @@ const utils_1 = __nccwpck_require__(918);
 const git_1 = __nccwpck_require__(3374);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, git_1.getPreviousTag)()), TE.chain(({ preTag }) => (0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('github.ref_name')), (0, utils_1.liftStringToOption)(preTag))), TE.chain(git_1.getLogs), TE.bindTo('commitLog'), 
+        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, git_1.getPreviousTag)()), TE.chain(({ preTag }) => (0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('currentTag')), (0, utils_1.liftStringToOption)(preTag))), TE.chain(git_1.getLogs), TE.bindTo('commitLog'), 
         // TODO now can accept only "angular"
         TE.bind('style', () => TE.of(core.getInput('style'))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TE.chain(generator_1.generateDoc), TE.chain(generator_1.generateReleaseNote));
         Either.match(err => {

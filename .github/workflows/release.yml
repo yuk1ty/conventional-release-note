@@ -15,6 +15,7 @@ jobs:
         with:
           style: angular
           tagPattern: v*
+          currentTag: ${{ github.ref_name }}
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
       - name: Create a new release note

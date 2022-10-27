@@ -1,19 +1,22 @@
 name: "Your name here"
-description: 'Provide a description here'
-author: 'Your name or organization here'
+description: "Provide a description here"
+author: "Your name or organization here"
 inputs:
+  currentTag:
+    required: true
+    description: ""
   tagPattern:
     required: false
-    description: 'Tag naming convention.'
-    default: ''
+    description: "Tag naming convention."
+    default: ""
   style:
     required: true
-    description: 'Decide what style you would like to use'
-    default: 'angular'
+    description: "Decide what style you would like to use"
+    default: "angular"
   scopes:
     required: false
-    description: 'Scopes you would like to include'
-    default: ''
+    description: "Scopes you would like to include"
+    default: ""
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: "node16"
+  main: "dist/index.js"

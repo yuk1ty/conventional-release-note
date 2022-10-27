@@ -5,7 +5,7 @@ import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 import {categorize} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
-import {execute, liftStringToOption, makeTagRange} from './utils'
+import {liftStringToOption, makeTagRange} from './utils'
 import {getPreviousTag, getLogs} from './git'
 
 async function run(): Promise<void> {
@@ -14,7 +14,7 @@ async function run(): Promise<void> {
     TE.bind('preTag', () => getPreviousTag()),
     TE.chain(({preTag}) =>
       makeTagRange(
-        liftStringToOption(core.getInput('github.ref_name')),
+        liftStringToOption(core.getInput('currentTag')),
         liftStringToOption(preTag)
       )
     ),
