@@ -50,6 +50,7 @@ const filterLogBy = (scope, convention) => (log) => {
     return (0, Option_1.isSome)(filtered);
 };
 const categorize = (logs, scope) => {
+    console.log('raw logs: %j', logs);
     return (0, function_1.pipe)(TE.Do, TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))), TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))), TE.chain(({ feat, fix }) => TE.right({
         feat: feat,
         fix: fix
@@ -105,10 +106,12 @@ const appendIfNeeded = (appender, title) => {
 };
 const w = Writer.getChain(Array.getMonoid());
 const generateDoc = (source) => {
+    console.log('summary: %j', source);
     return (0, function_1.pipe)(Writer.tell(appendIfNeeded(source.feat, 'Features')), writer => w.chain(writer, () => Writer.tell(appendIfNeeded(source.fix, 'Bug Fixes'))), writer => Writer.execute(writer), docs => TE.of(docs));
 };
 exports.generateDoc = generateDoc;
 const generateReleaseNote = (source) => {
+    console.log('docs: %j', source);
     return TE.of(Array.reduce('', (acc, cur) => {
         const block = `## ${cur.title}\n${cur.content}\n`;
         return acc + block;
@@ -127,9 +130,9 @@ exports.generateReleaseNote = generateReleaseNote;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLogs = exports.getPreviousTag = void 0;
 const utils_1 = __nccwpck_require__(918);
-const getPreviousTag = () => (0, utils_1.execute)(`git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)()} | sed -n 2p`);
+const getPreviousTag = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)} | sed -n 2p`;
 exports.getPreviousTag = getPreviousTag;
-const getLogs = (tagRange) => (0, utils_1.execute)(`git log --oneline --pretty=tformat:"%s by @%an in %h" ${tagRange}`);
+const getLogs = (tagRange) => `git log --oneline --pretty=tformat:"%s by @%an in %h" ${tagRange}`;
 exports.getLogs = getLogs;
 
 
@@ -180,14 +183,17 @@ const utils_1 = __nccwpck_require__(918);
 const git_1 = __nccwpck_require__(3374);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, git_1.getPreviousTag)()), TE.chain(({ preTag }) => (0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('currentTag')), (0, utils_1.liftStringToOption)(preTag))), TE.chain(git_1.getLogs), TE.bindTo('commitLog'), 
+        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, utils_1.execute)((0, git_1.getPreviousTag)(core.getInput('tagPattern')))), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('currentTag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogs)(tagRange))), TE.bindTo('commitLog'), 
         // TODO now can accept only "angular"
-        TE.bind('style', () => TE.of(core.getInput('style'))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TE.chain(generator_1.generateDoc), TE.chain(generator_1.generateReleaseNote));
+        TE.bind('style', () => TE.of(core.getInput('style'))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
             }
-        }, val => core.setOutput('summary', val))(yield program());
+        }, val => {
+            console.log('%j', val);
+            core.setOutput('summary', val);
+        })(yield program());
     });
 }
 run();
@@ -219,13 +225,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.makeTagRange = exports.getTagPatternInput = exports.liftStringToOption = exports.execute = void 0;
-const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const Option = __importStar(__nccwpck_require__(2569));
 const TE = __importStar(__nccwpck_require__(437));
+const E = __importStar(__nccwpck_require__(7534));
 const execute = (command) => {
+    return TE.tryCatch(() => innerExec(command), err => {
+        if (err instanceof Error) {
+            return new Error(err.message);
+        }
+        else {
+            // not come here?
+            return new Error('some error occurred');
+        }
+    });
+};
+exports.execute = execute;
+const innerExec = (command) => __awaiter(void 0, void 0, void 0, function* () {
     let output = '';
     const options = {};
     options.listeners = {
@@ -236,10 +263,10 @@ const execute = (command) => {
             console.error(data);
         }
     };
-    Promise.resolve(exec.exec(command, [], options));
-    return TE.of(output);
-};
-exports.execute = execute;
+    yield exec.exec(command, [], options);
+    console.log('command: %j, output: %j', command, output);
+    return output;
+});
 const liftStringToOption = (source) => {
     if (source === '') {
         return Option.none;
@@ -249,25 +276,25 @@ const liftStringToOption = (source) => {
     }
 };
 exports.liftStringToOption = liftStringToOption;
-const getTagPatternInput = () => {
-    const tagPattern = (0, exports.liftStringToOption)(core.getInput('tagPattern'));
-    Option.fold(() => '', s => `--list '${tagPattern}'`)(tagPattern);
+const getTagPatternInput = (tagPattern) => {
+    const pat = (0, exports.liftStringToOption)(tagPattern);
+    return Option.fold(() => '', pat => `--list '${pat}'`)(pat);
 };
 exports.getTagPatternInput = getTagPatternInput;
 const makeTagRange = (newTag, preTag) => {
     if (Option.isNone(newTag) && Option.isNone(preTag)) {
-        return TE.left(new Error('ref or preTag should be filled'));
+        return E.left(new Error('ref or preTag should be filled'));
     }
     if (Option.isSome(newTag)) {
         if (Option.isSome(preTag)) {
-            return TE.right(`${preTag.value.trim()}...${newTag.value}`);
+            return E.right(`${preTag.value.trim()}...${newTag.value}`);
         }
         else {
-            return TE.right(newTag.value);
+            return E.right(newTag.value);
         }
     }
     else {
-        return TE.left(new Error('ref should be filled'));
+        return E.left(new Error('ref should be filled'));
     }
 };
 exports.makeTagRange = makeTagRange;

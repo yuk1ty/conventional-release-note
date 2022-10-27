@@ -33,6 +33,7 @@ export const categorize = (
   logs: string[],
   scope: Option<string[]>
 ): TE.TaskEither<Error, CategorizedSummary> => {
+  console.log('raw logs: %j', logs)
   return pipe(
     TE.Do,
     TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))),

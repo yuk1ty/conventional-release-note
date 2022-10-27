@@ -5,20 +5,25 @@ import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 import {categorize} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
-import {liftStringToOption, makeTagRange} from './utils'
+import {execute, liftStringToOption, makeTagRange} from './utils'
 import {getPreviousTag, getLogs} from './git'
 
 async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
     TE.Do,
-    TE.bind('preTag', () => getPreviousTag()),
+    TE.bind('preTag', () =>
+      execute(getPreviousTag(core.getInput('tagPattern')))
+    ),
     TE.chain(({preTag}) =>
-      makeTagRange(
-        liftStringToOption(core.getInput('currentTag')),
-        liftStringToOption(preTag)
+      TE.fromEither(
+        makeTagRange(
+          liftStringToOption(core.getInput('currentTag')),
+          liftStringToOption(preTag)
+        )
       )
     ),
-    TE.chain(getLogs),
+    TE.bindTo('tagRange'),
+    TE.chain(({tagRange}) => execute(getLogs(tagRange))),
     TE.bindTo('commitLog'),
     // TODO now can accept only "angular"
     TE.bind('style', () => TE.of(core.getInput('style'))),
@@ -29,8 +34,10 @@ async function run(): Promise<void> {
         Option.filter((s: string[]) => s.length != 0)(scopes)
       )
     ),
-    TE.chain(generateDoc),
-    TE.chain(generateReleaseNote)
+    TE.bindTo('summary'),
+    TE.chain(({summary}) => generateDoc(summary)),
+    TE.bindTo('docs'),
+    TE.chain(({docs}) => generateReleaseNote(docs))
   )
   Either.match(
     err => {
@@ -38,7 +45,10 @@ async function run(): Promise<void> {
         core.setFailed(err.message)
       }
     },
-    val => core.setOutput('summary', val)
+    val => {
+      console.log('%j', val)
+      core.setOutput('summary', val)
+    }
   )(await program())
 }
 

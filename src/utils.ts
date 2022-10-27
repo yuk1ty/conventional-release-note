@@ -1,10 +1,26 @@
-import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {ExecOptions} from '@actions/exec'
 import * as Option from 'fp-ts/Option'
+import * as T from 'fp-ts/Task'
 import * as TE from 'fp-ts/TaskEither'
+import * as E from 'fp-ts/Either'
+import {pipe} from 'fp-ts/lib/function'
 
 export const execute = (command: string): TE.TaskEither<Error, string> => {
+  return TE.tryCatch(
+    () => innerExec(command),
+    err => {
+      if (err instanceof Error) {
+        return new Error(err.message)
+      } else {
+        // not come here?
+        return new Error('some error occurred')
+      }
+    }
+  )
+}
+
+const innerExec = async (command: string): Promise<string> => {
   let output = ''
   const options: ExecOptions = {}
   options.listeners = {
@@ -15,8 +31,9 @@ export const execute = (command: string): TE.TaskEither<Error, string> => {
       console.error(data)
     }
   }
-  Promise.resolve(exec.exec(command, [], options))
-  return TE.of(output)
+  await exec.exec(command, [], options)
+  console.log('command: %j, output: %j', command, output)
+  return output
 }
 
 export const liftStringToOption = (source: string) => {
@@ -27,28 +44,28 @@ export const liftStringToOption = (source: string) => {
   }
 }
 
-export const getTagPatternInput = () => {
-  const tagPattern = liftStringToOption(core.getInput('tagPattern'))
-  Option.fold(
+export const getTagPatternInput = (tagPattern: string) => {
+  const pat = liftStringToOption(tagPattern)
+  return Option.fold(
     () => '',
-    s => `--list '${tagPattern}'`
-  )(tagPattern)
+    pat => `--list '${pat}'`
+  )(pat)
 }
 
 export const makeTagRange = (
   newTag: Option.Option<string>,
   preTag: Option.Option<string>
-): TE.TaskEither<Error, string> => {
+): E.Either<Error, string> => {
   if (Option.isNone(newTag) && Option.isNone(preTag)) {
-    return TE.left(new Error('ref or preTag should be filled'))
+    return E.left(new Error('ref or preTag should be filled'))
   }
   if (Option.isSome(newTag)) {
     if (Option.isSome(preTag)) {
-      return TE.right(`${preTag.value.trim()}...${newTag.value}`)
+      return E.right(`${preTag.value.trim()}...${newTag.value}`)
     } else {
-      return TE.right(newTag.value)
+      return E.right(newTag.value)
     }
   } else {
-    return TE.left(new Error('ref should be filled'))
+    return E.left(new Error('ref should be filled'))
   }
 }
