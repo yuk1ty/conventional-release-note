@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {ExecOptions} from '@actions/exec'
 import * as Option from 'fp-ts/Option'
@@ -24,6 +25,14 @@ export const liftStringToOption = (source: string) => {
   } else {
     return Option.some(source)
   }
+}
+
+export const getTagPatternInput = () => {
+  const tagPattern = liftStringToOption(core.getInput('tagPattern'))
+  Option.fold(
+    () => '',
+    s => `--list '${tagPattern}'`
+  )(tagPattern)
 }
 
 export const makeTagRange = (

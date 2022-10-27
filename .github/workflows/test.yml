@@ -21,5 +21,6 @@ jobs:
         id: gen_note
         with:
           style: angular
+          tagPattern: test-v*
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"

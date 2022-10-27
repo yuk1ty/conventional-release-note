@@ -2,9 +2,9 @@ name: "Your name here"
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  preTag:
-    required: true
-    description: 'A tag before the latest tag. This is normally generated via Git command. Please see README.'
+  tagPattern:
+    required: false
+    description: 'Tag naming convention.'
     default: ''
   style:
     required: true

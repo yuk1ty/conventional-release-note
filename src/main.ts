@@ -6,21 +6,19 @@ import {pipe} from 'fp-ts/lib/function'
 import {categorize} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
 import {execute, liftStringToOption, makeTagRange} from './utils'
+import {getPreviousTag, getLogs} from './git'
 
 async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
     TE.Do,
-    TE.bind('tagRange', () => {
-      return makeTagRange(
-        liftStringToOption(core.getInput('ref')),
-        liftStringToOption(core.getInput('preTag'))
-      )
-    }),
-    TE.chain(({tagRange}) =>
-      execute(
-        `git log --oneline --pretty=tformat:"%s by @%an in %h" ${tagRange}`
+    TE.bind('preTag', () => getPreviousTag()),
+    TE.chain(({preTag}) =>
+      makeTagRange(
+        liftStringToOption(core.getInput('github.ref_name')),
+        liftStringToOption(preTag)
       )
     ),
+    TE.chain(getLogs),
     TE.bindTo('commitLog'),
     // TODO now can accept only "angular"
     TE.bind('style', () => TE.of(core.getInput('style'))),
