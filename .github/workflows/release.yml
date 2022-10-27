@@ -9,11 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Extract previous git tag
+        id: tag
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate --list 'v*' | sed -n 2p)
+          echo ::set-output name=prevTag::$PREV_TAG
       - name: Generated content
         uses: ./
         id: gen_note
         with:
           style: angular
+          preTag: ${{ steps.tag.outputs.prevTag }}
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
       - name: Create a new release note

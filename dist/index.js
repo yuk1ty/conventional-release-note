@@ -154,13 +154,61 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const exec = __importStar(__nccwpck_require__(1514));
 const Option = __importStar(__nccwpck_require__(2569));
 const Either = __importStar(__nccwpck_require__(7534));
-const TaskEither = __importStar(__nccwpck_require__(437));
+const TE = __importStar(__nccwpck_require__(437));
 const function_1 = __nccwpck_require__(6985);
 const classifier_1 = __nccwpck_require__(9617);
 const generator_1 = __nccwpck_require__(6476);
+const utils_1 = __nccwpck_require__(918);
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const program = (0, function_1.pipe)(TE.Do, TE.bind('tagRange', () => {
+            return (0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('ref')), (0, utils_1.liftStringToOption)(core.getInput('preTag')));
+        }), TE.chain(({ tagRange }) => (0, utils_1.execute)(`git log --oneline --pretty=tformat:"%s by @%an in %h" ${tagRange}`)), TE.bindTo('commitLog'), 
+        // TODO now can accept only "angular"
+        TE.bind('style', () => TE.of(core.getInput('style'))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TE.chain(generator_1.generateDoc), TE.chain(generator_1.generateReleaseNote));
+        Either.match(err => {
+            if (err instanceof Error) {
+                core.setFailed(err.message);
+            }
+        }, val => core.setOutput('summary', val))(yield program());
+    });
+}
+run();
+
+
+/***/ }),
+
+/***/ 918:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.makeTagRange = exports.liftStringToOption = exports.execute = void 0;
+const exec = __importStar(__nccwpck_require__(1514));
+const Option = __importStar(__nccwpck_require__(2569));
+const TE = __importStar(__nccwpck_require__(437));
 const execute = (command) => {
     let output = '';
     const options = {};
@@ -173,21 +221,35 @@ const execute = (command) => {
         }
     };
     Promise.resolve(exec.exec(command, [], options));
-    return TaskEither.of(output);
+    return TE.of(output);
 };
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const program = (0, function_1.pipe)(TaskEither.Do, TaskEither.bind('newTag', () => TaskEither.of(core.getInput('ref'))), TaskEither.bind('preTag', () => execute('/bin/bash -c "git tag --sort=-creatordate | sed -n 2p"')), TaskEither.chain(({ newTag, preTag }) => execute(`git log --oneline --pretty=tformat:"%s by %an in %h" ${preTag.trim()}..${newTag}`)), TaskEither.bindTo('commitLog'), TaskEither.bind('commit_log', () => TaskEither.of(core.getInput('commit_log'))), 
-        // TODO now can accept only "angular"
-        TaskEither.bind('style', () => TaskEither.of(core.getInput('style'))), TaskEither.bind('scopes', () => TaskEither.of(Option.of(core.getMultilineInput('scopes')))), TaskEither.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TaskEither.chain(generator_1.generateDoc), TaskEither.chain(generator_1.generateReleaseNote));
-        Either.match(err => {
-            if (err instanceof Error) {
-                core.setFailed(err.message);
-            }
-        }, val => core.setOutput('summary', val))(yield program());
-    });
-}
-run();
+exports.execute = execute;
+const liftStringToOption = (source) => {
+    if (source === '') {
+        return Option.none;
+    }
+    else {
+        return Option.some(source);
+    }
+};
+exports.liftStringToOption = liftStringToOption;
+const makeTagRange = (newTag, preTag) => {
+    if (Option.isNone(newTag) && Option.isNone(preTag)) {
+        return TE.left(new Error('ref or preTag should be filled'));
+    }
+    if (Option.isSome(newTag)) {
+        if (Option.isSome(preTag)) {
+            return TE.right(`${preTag.value.trim()}...${newTag.value}`);
+        }
+        else {
+            return TE.right(newTag.value);
+        }
+    }
+    else {
+        return TE.left(new Error('ref should be filled'));
+    }
+};
+exports.makeTagRange = makeTagRange;
 
 
 /***/ }),
