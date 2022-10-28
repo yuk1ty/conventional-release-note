@@ -2,10 +2,10 @@ name: "Your name here"
 description: "Provide a description here"
 author: "Your name or organization here"
 inputs:
-  currentTag:
+  current-tag:
     required: true
     description: ""
-  tagPattern:
+  tag-pattern:
     required: false
     description: "Tag naming convention."
     default: ""

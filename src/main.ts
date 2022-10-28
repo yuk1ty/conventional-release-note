@@ -12,12 +12,12 @@ async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
     TE.Do,
     TE.bind('preTag', () =>
-      execute(getPreviousTag(core.getInput('tagPattern')))
+      execute(getPreviousTag(core.getInput('tag-pattern')))
     ),
     TE.chain(({preTag}) =>
       TE.fromEither(
         makeTagRange(
-          liftStringToOption(core.getInput('currentTag')),
+          liftStringToOption(core.getInput('current-tag')),
           liftStringToOption(preTag)
         )
       )

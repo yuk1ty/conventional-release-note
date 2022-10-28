@@ -17,12 +17,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Test git log
+        run: |
+          git tag --list
+          PREVIOUS_TAG=$(git tag --sort=-creatordate --list "v*" | sed -n 2p)
+          echo "$PREVIOUS_TAG"
+          echo "ref_name"
+          git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref_name }}
+          echo "ref"
+          git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref }}
       - name: Generated content
         uses: ./
         id: gen_note
         with:
           kind: default
-          tagPattern: test-v*
-          currentTag: ${{ github.ref_name }}
+          tag-pattern: test-v*
+          current-tag: ${{ github.ref_name }}
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
