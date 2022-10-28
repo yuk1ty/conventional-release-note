@@ -4,19 +4,39 @@ author: "Your name or organization here"
 inputs:
   current-tag:
     required: true
-    description: ""
+    description: >
+      Sets the current tag. This will be used in extracting logs in the specific range of tags.
+      Logs are extracted in condition of `${previous-tag}...${current-tag}`.
+      This option decides what tag you'd like to set as the end of the range.
+      The default value is `github.ref_name`, but you can set a specific tag whatever you like.
+    default: ${{ github.ref_name }}
   tag-pattern:
     required: false
-    description: "Tag naming convention."
-    default: ""
+    description: >
+      Filters tags by this option. This will be used as a parameter of `git tag --list [tag-pattern]`.
+      If this passed with empty string, `git tag` will be executed. It means getting all tags indiscriminately.
   kind:
     required: false
-    description: 'Decide what style you would like to use. Now the action has "default"'
+    description: Decides what kind of the commit convention you would like to use. Now the action has only "default".
     default: "default"
   scopes:
     required: false
-    description: "Scopes you would like to include"
-    default: ""
+    description: >
+      If scopes are set, this action will only include commit logs with their scopes (others are excluded).
+      For example, assume that the following commit logs:
+      - feat(core): add a feature
+      - feat(util): add a feature
+      - feat(debug): add a feature
+      And assume that the following `scopes` set as well:
+      - scopes |
+        core
+        util
+      Then the following release note will be generated.
+      ```
+      ## Features
+      - feat(core): add a feature
+      - feat(util): add a feature
+      ```
 runs:
   using: "node16"
   main: "dist/index.js"

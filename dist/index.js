@@ -143,7 +143,7 @@ exports.generateReleaseNote = generateReleaseNote;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLogs = exports.getPreviousTag = void 0;
 const utils_1 = __nccwpck_require__(918);
-const getPreviousTag = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)} | sed -n 2p`;
+const getPreviousTag = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)}`.split('\n')[1];
 exports.getPreviousTag = getPreviousTag;
 const getLogs = (tagRange) => `git log --oneline --pretty=tformat:\"%s by @%an in %h\" ${tagRange}`;
 exports.getLogs = getLogs;
@@ -282,7 +282,7 @@ const liftStringToOption = (source) => {
 exports.liftStringToOption = liftStringToOption;
 const getTagPatternInput = (tagPattern) => {
     const pat = (0, exports.liftStringToOption)(tagPattern);
-    return Option.fold(() => '', pat => `--list '${pat}'`)(pat);
+    return Option.fold(() => '', pat => `--list "${pat}"`)(pat);
 };
 exports.getTagPatternInput = getTagPatternInput;
 const makeTagRange = (newTag, preTag) => {

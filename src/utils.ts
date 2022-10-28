@@ -38,7 +38,7 @@ export const getTagPatternInput = (tagPattern: string) => {
   const pat = liftStringToOption(tagPattern)
   return Option.fold(
     () => '',
-    pat => `--list '${pat}'`
+    pat => `--list "${pat}"`
   )(pat)
 }
 
