@@ -26,11 +26,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.categorize = void 0;
+exports.categorize = exports.stringToConventionalKind = void 0;
 const Option_1 = __nccwpck_require__(2569);
 const TE = __importStar(__nccwpck_require__(437));
+const E = __importStar(__nccwpck_require__(7534));
 const S = __importStar(__nccwpck_require__(5189));
 const function_1 = __nccwpck_require__(6985);
+const acceptableKinds = ['default'];
+const stringToConventionalKind = (kind) => {
+    if (acceptableKinds.includes(kind)) {
+        if (kind === 'default') {
+            return E.right(kind);
+        }
+    }
+    return E.left(new Error(`"kind" should be ${acceptableKinds.join(',')}`));
+};
+exports.stringToConventionalKind = stringToConventionalKind;
 const filterLogBy = (scope, convention) => (log) => {
     const m = (0, Option_1.fromNullable)(/([a-z]+)\(?([a-z]+)?\)?: [a-z]+/.exec(log));
     const filtered = (0, Option_1.filter)((m) => {
@@ -49,12 +60,16 @@ const filterLogBy = (scope, convention) => (log) => {
     })(m);
     return (0, Option_1.isSome)(filtered);
 };
-const categorize = (logs, scope) => {
-    console.log('raw logs: %j', logs);
-    return (0, function_1.pipe)(TE.Do, TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))), TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))), TE.chain(({ feat, fix }) => TE.right({
-        feat: feat,
-        fix: fix
-    })));
+const categorize = (logs, kind, scope) => {
+    if (kind === 'default') {
+        return (0, function_1.pipe)(TE.Do, TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))), TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))), TE.chain(({ feat, fix }) => TE.right({
+            feat: feat,
+            fix: fix
+        })));
+    }
+    else {
+        return TE.left(new Error('cannot accept a value except "default"'));
+    }
 };
 exports.categorize = categorize;
 
@@ -106,12 +121,10 @@ const appendIfNeeded = (appender, title) => {
 };
 const w = Writer.getChain(Array.getMonoid());
 const generateDoc = (source) => {
-    console.log('summary: %j', source);
     return (0, function_1.pipe)(Writer.tell(appendIfNeeded(source.feat, 'Features')), writer => w.chain(writer, () => Writer.tell(appendIfNeeded(source.fix, 'Bug Fixes'))), writer => Writer.execute(writer), docs => TE.of(docs));
 };
 exports.generateDoc = generateDoc;
 const generateReleaseNote = (source) => {
-    console.log('docs: %j', source);
     return TE.of(Array.reduce('', (acc, cur) => {
         const block = `## ${cur.title}\n${cur.content}\n`;
         return acc + block;
@@ -183,15 +196,12 @@ const utils_1 = __nccwpck_require__(918);
 const git_1 = __nccwpck_require__(3374);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, utils_1.execute)((0, git_1.getPreviousTag)(core.getInput('tagPattern')))), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('currentTag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogs)(tagRange))), TE.bindTo('commitLog'), 
-        // TODO now can accept only "angular"
-        TE.bind('style', () => TE.of(core.getInput('style'))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, style, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
+        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, utils_1.execute)((0, git_1.getPreviousTag)(core.getInput('tagPattern')))), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('currentTag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogs)(tagRange))), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
             }
         }, val => {
-            console.log('%j', val);
             core.setOutput('summary', val);
         })(yield program());
     });
@@ -246,8 +256,8 @@ const execute = (command) => {
             return new Error(err.message);
         }
         else {
-            // not come here?
-            return new Error('some error occurred');
+            // not comes here?
+            return new Error('unexpected error occurred');
         }
     });
 };
@@ -264,7 +274,6 @@ const innerExec = (command) => __awaiter(void 0, void 0, void 0, function* () {
         }
     };
     yield exec.exec(command, [], options);
-    console.log('command: %j, output: %j', command, output);
     return output;
 });
 const liftStringToOption = (source) => {
