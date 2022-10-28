@@ -1,5 +1,4 @@
 import * as exec from '@actions/exec'
-import {ExecOptions} from '@actions/exec'
 import * as Option from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
@@ -19,18 +18,12 @@ export const execute = (command: string): TE.TaskEither<Error, string> => {
 }
 
 const innerExec = async (command: string): Promise<string> => {
-  let output = ''
-  const options: ExecOptions = {}
-  options.listeners = {
-    stdout: (data: Buffer) => {
-      output += data.toString()
-    },
-    stderr: (data: Buffer) => {
-      console.error(data)
-    }
+  const output = await exec.getExecOutput(command)
+  if (output.exitCode === 0) {
+    return output.stdout
+  } else {
+    throw new Error(output.stderr)
   }
-  await exec.exec(command, [], options)
-  return output
 }
 
 export const liftStringToOption = (source: string) => {

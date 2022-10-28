@@ -9,6 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Test git log
+        run: |
+          git tag --list
+          PREVIOUS_TAG=$(git tag --sort=-creatordate --list "v*" | sed -n 2p)
+          echo "$PREVIOUS_TAG"
+          echo "ref_name"
+          git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref_name }}
+          echo "ref"
+          git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref }}
       - name: Generated content
         uses: ./
         id: gen_note

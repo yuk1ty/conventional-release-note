@@ -46,3 +46,10 @@ describe('makeTagRange', () => {
     }
   })
 })
+
+describe('execute function', () => {
+  test('returns right if a command execution finished successfully', async () => {
+    const result = util.execute(`pwd`)
+    expect(E.isRight(await result())).toBe(true)
+  })
+})

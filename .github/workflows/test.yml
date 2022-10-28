@@ -22,7 +22,7 @@ jobs:
         id: gen_note
         with:
           kind: default
-          tagPattern: v*
+          tagPattern: test-v*
           currentTag: ${{ github.ref_name }}
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
