@@ -13,7 +13,7 @@ jobs:
         uses: ./
         id: gen_note
         with:
-          style: angular
+          kind: default
           tagPattern: v*
           currentTag: ${{ github.ref_name }}
       - name: Print the release note
@@ -23,8 +23,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.this_tag.outputs.VERSION }}
-          name: Release ${{ steps.this_tag.outputs.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: ${{ steps.gen_note.outputs.summary }}
           draft: false
           prerelease: false
