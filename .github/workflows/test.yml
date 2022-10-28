@@ -17,10 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: ./
+      - name: Generated content
+        uses: ./
         id: gen_note
         with:
-          style: angular
-          tagPattern: test-v*
+          kind: default
+          tagPattern: v*
+          currentTag: ${{ github.ref_name }}
       - name: Print the release note
         run: echo "${{ steps.gen_note.outputs.summary }}"
