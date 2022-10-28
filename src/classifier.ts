@@ -1,11 +1,27 @@
 import {Option, fromNullable, filter, isSome, isNone} from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
+import * as E from 'fp-ts/Either'
 import * as S from 'fp-ts/string'
 import {pipe} from 'fp-ts/lib/function'
 
 export type CategorizedSummary = {
   feat: string[]
   fix: string[]
+}
+
+export type ConventionalKind = 'default'
+
+const acceptableKinds = ['default']
+
+export const stringToConventionalKind = (
+  kind: string
+): E.Either<Error, ConventionalKind> => {
+  if (acceptableKinds.includes(kind)) {
+    if (kind === 'default') {
+      return E.right(kind)
+    }
+  }
+  return E.left(new Error(`"kind" should be ${acceptableKinds.join(',')}`))
 }
 
 const filterLogBy =
@@ -31,18 +47,22 @@ const filterLogBy =
 
 export const categorize = (
   logs: string[],
+  kind: ConventionalKind,
   scope: Option<string[]>
 ): TE.TaskEither<Error, CategorizedSummary> => {
-  console.log('raw logs: %j', logs)
-  return pipe(
-    TE.Do,
-    TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))),
-    TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))),
-    TE.chain(({feat, fix}) =>
-      TE.right({
-        feat: feat,
-        fix: fix
-      })
+  if (kind === 'default') {
+    return pipe(
+      TE.Do,
+      TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))),
+      TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))),
+      TE.chain(({feat, fix}) =>
+        TE.right({
+          feat: feat,
+          fix: fix
+        })
+      )
     )
-  )
+  } else {
+    return TE.left(new Error('cannot accept a value except "default"'))
+  }
 }

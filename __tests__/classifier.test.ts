@@ -1,8 +1,17 @@
 import {none, some} from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
+import * as E from 'fp-ts/Either'
 import {pipe} from 'fp-ts/lib/function'
 import {expect, test, describe} from '@jest/globals'
-import {categorize} from '../src/classifier'
+import {categorize, stringToConventionalKind} from '../src/classifier'
+
+describe('stringToConventionalKind function', () => {
+  test("raises error if the passed value wasn't contained", () => {
+    // For example, the empty string is not contained `acceptableKinds`
+    const result = stringToConventionalKind('')
+    expect(E.isLeft(result)).toBe(true)
+  })
+})
 
 describe('categorize function', () => {
   test('categorize commits from "feat" and "fix" without scope', async () => {
@@ -14,7 +23,7 @@ describe('categorize function', () => {
 
     const runTest = pipe(
       TE.Do,
-      TE.bind('result', () => categorize(logs, none)),
+      TE.bind('result', () => categorize(logs, 'default', none)),
       TE.chain(({result}) =>
         TE.of(
           expect(result).toStrictEqual({
@@ -37,7 +46,7 @@ describe('categorize function', () => {
 
     const runTest = pipe(
       TE.Do,
-      TE.bind('result', () => categorize(logs, some(['data']))),
+      TE.bind('result', () => categorize(logs, 'default', some(['data']))),
       TE.chain(({result}) =>
         TE.of(
           expect(result).toStrictEqual({
@@ -60,7 +69,9 @@ describe('categorize function', () => {
 
     const runTest = pipe(
       TE.Do,
-      TE.bind('result', () => categorize(logs, some(['data', 'other']))),
+      TE.bind('result', () =>
+        categorize(logs, 'default', some(['data', 'other']))
+      ),
       TE.chain(({result}) =>
         TE.of(
           expect(result).toStrictEqual({

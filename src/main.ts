@@ -3,7 +3,7 @@ import * as Option from 'fp-ts/Option'
 import * as Either from 'fp-ts/Either'
 import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
-import {categorize} from './classifier'
+import {categorize, stringToConventionalKind} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
 import {execute, liftStringToOption, makeTagRange} from './utils'
 import {getPreviousTag, getLogs} from './git'
@@ -25,12 +25,14 @@ async function run(): Promise<void> {
     TE.bindTo('tagRange'),
     TE.chain(({tagRange}) => execute(getLogs(tagRange))),
     TE.bindTo('commitLog'),
-    // TODO now can accept only "angular"
-    TE.bind('style', () => TE.of(core.getInput('style'))),
+    TE.bind('kind', () =>
+      TE.fromEither(stringToConventionalKind(core.getInput('kind')))
+    ),
     TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))),
-    TE.chain(({commitLog, style, scopes}) =>
+    TE.chain(({commitLog, kind, scopes}) =>
       categorize(
         commitLog.split('\n'),
+        kind,
         Option.filter((s: string[]) => s.length != 0)(scopes)
       )
     ),
@@ -46,7 +48,6 @@ async function run(): Promise<void> {
       }
     },
     val => {
-      console.log('%j', val)
       core.setOutput('summary', val)
     }
   )(await program())

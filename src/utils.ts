@@ -1,10 +1,8 @@
 import * as exec from '@actions/exec'
 import {ExecOptions} from '@actions/exec'
 import * as Option from 'fp-ts/Option'
-import * as T from 'fp-ts/Task'
 import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
-import {pipe} from 'fp-ts/lib/function'
 
 export const execute = (command: string): TE.TaskEither<Error, string> => {
   return TE.tryCatch(
@@ -13,8 +11,8 @@ export const execute = (command: string): TE.TaskEither<Error, string> => {
       if (err instanceof Error) {
         return new Error(err.message)
       } else {
-        // not come here?
-        return new Error('some error occurred')
+        // not comes here?
+        return new Error('unexpected error occurred')
       }
     }
   )
@@ -32,7 +30,6 @@ const innerExec = async (command: string): Promise<string> => {
     }
   }
   await exec.exec(command, [], options)
-  console.log('command: %j, output: %j', command, output)
   return output
 }
 

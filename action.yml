@@ -9,10 +9,10 @@ inputs:
     required: false
     description: "Tag naming convention."
     default: ""
-  style:
-    required: true
-    description: "Decide what style you would like to use"
-    default: "angular"
+  kind:
+    required: false
+    description: 'Decide what style you would like to use. Now the action has "default"'
+    default: "default"
   scopes:
     required: false
     description: "Scopes you would like to include"
