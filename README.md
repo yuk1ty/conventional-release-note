@@ -16,6 +16,11 @@
     # Filters tags by this option. This will be used as a parameter of `git tag --list [tag-pattern]`.
     # If this passed with empty string, `git tag` will be executed. It means getting all tags indiscriminately.
     tag-pattern: v*
+    # Sets the previous tag. This will be used in extracting logs in the specific range of tags.
+    # Logs are extracted in condition of `${previous-tag}...${current-tag}`.
+    # This option decides what tag you'd like to set as the start of the range.
+    # You don't need to set this options as usual, but you can set a specific tag whatever you like.
+    previous-tag: v0.1.0
     # Sets the current tag. This will be used in extracting logs in the specific range of tags.
     # Logs are extracted in condition of `${previous-tag}...${current-tag}`.
     # This option decides what tag you'd like to set as the end of the range.
