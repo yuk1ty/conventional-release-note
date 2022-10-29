@@ -6,5 +6,10 @@
   "singleQuote": true,
   "trailingComma": "none",
   "bracketSpacing": false,
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "importOrder": ["^@actions/(.*)$", "^fp-ts/(.*)$", "^[./]"],
+  "importOrderSeparation": true,
+  "importOrderGroupNamespaceSpecifiers": true,
+  "importOrderCaseInsensitive": true,
+  "importOrderSortSpecifiers": true
 }

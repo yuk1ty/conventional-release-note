@@ -1,14 +1,15 @@
 import * as exec from '@actions/exec'
-import * as Option from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
+
 import * as E from 'fp-ts/Either'
+import * as O from 'fp-ts/Option'
+import * as TE from 'fp-ts/TaskEither'
 
 export const execute = (
   command: string,
   args?: string[]
 ): TE.TaskEither<Error, string> => {
   return TE.tryCatch(
-    () => innerExec(command, args),
+    async () => innerExec(command, args),
     err => {
       if (err instanceof Error) {
         return new Error(err.message)
@@ -29,33 +30,31 @@ const innerExec = async (command: string, args?: string[]): Promise<string> => {
   }
 }
 
-export const liftStringToOption = (source: string) => {
+export const liftStringToOption = (source: string): O.Option<string> => {
   if (source === '') {
-    return Option.none
+    return O.none
   } else {
-    return Option.some(source)
+    return O.some(source)
   }
 }
 
-export const getTagPatternInput = (tagPattern: string) => {
+export const getTagPatternInput = (tagPattern: string): string => {
   const pat = liftStringToOption(tagPattern)
-  return Option.fold(
+  return O.fold(
     () => '',
-    pat => `--list "${pat}"`
+    p => `--list "${p}"`
   )(pat)
 }
 
 export const makeTagRange = (
-  newTag: Option.Option<string>,
-  preTag: Option.Option<string>
+  newTag: O.Option<string>,
+  preTag: O.Option<string>
 ): E.Either<Error, string> => {
-  console.log('newTag: %j', newTag)
-  console.log('prevTag: %j', preTag)
-  if (Option.isNone(newTag) && Option.isNone(preTag)) {
+  if (O.isNone(newTag) && O.isNone(preTag)) {
     return E.left(new Error('ref or preTag should be filled'))
   }
-  if (Option.isSome(newTag)) {
-    if (Option.isSome(preTag)) {
+  if (O.isSome(newTag)) {
+    if (O.isSome(preTag)) {
       return E.right(`${preTag.value.trim()}...${newTag.value}`)
     } else {
       return E.right(newTag.value)

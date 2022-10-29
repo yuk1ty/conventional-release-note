@@ -1,6 +1,8 @@
-import {expect, test, describe} from '@jest/globals'
+import {describe, expect, test} from '@jest/globals'
+
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
+
 import * as util from '../src/utils'
 
 describe('listStringToOption', () => {

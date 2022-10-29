@@ -8,6 +8,13 @@
       "project": "./tsconfig.json"
     },
     "rules": {
+      "sort-imports": ["warn", {
+        "ignoreCase": false,
+        "ignoreDeclarationSort": false,
+        "ignoreMemberSort": false,
+        "memberSyntaxSortOrder": ["none", "all", "multiple", "single"],
+        "allowSeparatedGroups": true
+      }],
       "i18n-text/no-en": "off",
       "eslint-comments/no-use": "off",
       "import/no-namespace": "off",
@@ -39,7 +46,7 @@
       "@typescript-eslint/prefer-function-type": "warn",
       "@typescript-eslint/prefer-includes": "error",
       "@typescript-eslint/prefer-string-starts-ends-with": "error",
-      "@typescript-eslint/promise-function-async": "error",
+      "@typescript-eslint/promise-function-async": "warn",
       "@typescript-eslint/require-array-sort-compare": "error",
       "@typescript-eslint/restrict-plus-operands": "error",
       "semi": "off",

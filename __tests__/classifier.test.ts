@@ -1,8 +1,10 @@
-import {none, some} from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
+import {describe, expect, test} from '@jest/globals'
+
 import * as E from 'fp-ts/Either'
+import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
-import {expect, test, describe} from '@jest/globals'
+import {none, some} from 'fp-ts/Option'
+
 import {categorize, stringToConventionalKind} from '../src/classifier'
 
 describe('stringToConventionalKind function', () => {

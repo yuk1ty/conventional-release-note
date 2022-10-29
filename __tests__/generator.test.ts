@@ -1,6 +1,8 @@
+import {describe, expect, test} from '@jest/globals'
+
 import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
-import {expect, test, describe} from '@jest/globals'
+
 import {generateDoc, generateReleaseNote} from '../src/generator'
 
 describe('generateDoc function', () => {

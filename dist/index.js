@@ -27,10 +27,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.categorize = exports.stringToConventionalKind = void 0;
-const Option_1 = __nccwpck_require__(2569);
-const TE = __importStar(__nccwpck_require__(437));
 const E = __importStar(__nccwpck_require__(7534));
+const O = __importStar(__nccwpck_require__(2569));
 const S = __importStar(__nccwpck_require__(5189));
+const TE = __importStar(__nccwpck_require__(437));
 const function_1 = __nccwpck_require__(6985);
 const acceptableKinds = ['default'];
 const stringToConventionalKind = (kind) => {
@@ -43,28 +43,28 @@ const stringToConventionalKind = (kind) => {
 };
 exports.stringToConventionalKind = stringToConventionalKind;
 const filterLogBy = (scope, convention) => (log) => {
-    const m = (0, Option_1.fromNullable)(/([a-z]+)\(?([a-z]+)?\)?: [a-z]+/.exec(log));
-    const filtered = (0, Option_1.filter)((m) => {
-        const _convention = m[1];
-        const _scope = (0, Option_1.fromNullable)(m[2]);
-        if ((0, Option_1.isSome)(scope) && (0, Option_1.isSome)(_scope)) {
+    const extracted = O.fromNullable(/([a-z]+)\(?([a-z]+)?\)?: [a-z]+/.exec(log));
+    const filtered = O.filter((elems) => {
+        const _convention = elems[1];
+        const _scope = O.fromNullable(elems[2]);
+        if (O.isSome(scope) && O.isSome(_scope)) {
             return (scope.value.findIndex(s => S.Eq.equals(s, _scope.value)) !== -1 &&
                 S.Eq.equals(convention, _convention));
         }
-        else if ((0, Option_1.isNone)(scope) && (0, Option_1.isNone)(_scope)) {
+        else if (O.isNone(scope) && O.isNone(_scope)) {
             return S.Eq.equals(convention, _convention);
         }
         else {
             return false;
         }
-    })(m);
-    return (0, Option_1.isSome)(filtered);
+    })(extracted);
+    return O.isSome(filtered);
 };
 const categorize = (logs, kind, scope) => {
     if (kind === 'default') {
         return (0, function_1.pipe)(TE.Do, TE.bind('feat', () => TE.of(logs.filter(filterLogBy(scope, 'feat')))), TE.bind('fix', () => TE.of(logs.filter(filterLogBy(scope, 'fix')))), TE.chain(({ feat, fix }) => TE.right({
-            feat: feat,
-            fix: fix
+            feat,
+            fix
         })));
     }
     else {
@@ -102,15 +102,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateReleaseNote = exports.generateDoc = void 0;
-const Writer = __importStar(__nccwpck_require__(4306));
-const TE = __importStar(__nccwpck_require__(437));
 const Array = __importStar(__nccwpck_require__(3834));
+const TE = __importStar(__nccwpck_require__(437));
+const Writer = __importStar(__nccwpck_require__(4306));
 const function_1 = __nccwpck_require__(6985);
 const appendIfNeeded = (appender, title) => {
-    if (appender.length != 0) {
+    if (appender.length !== 0) {
         return [
             {
-                title: title,
+                title,
                 content: appender.map(s => `* ${s}`).join('\n')
             }
         ];
@@ -189,19 +189,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const Option = __importStar(__nccwpck_require__(2569));
 const Either = __importStar(__nccwpck_require__(7534));
+const Option = __importStar(__nccwpck_require__(2569));
 const TE = __importStar(__nccwpck_require__(437));
 const function_1 = __nccwpck_require__(6985);
 const classifier_1 = __nccwpck_require__(9617);
 const generator_1 = __nccwpck_require__(6476);
-const utils_1 = __nccwpck_require__(918);
 const git_1 = __nccwpck_require__(3374);
+const utils_1 = __nccwpck_require__(918);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => {
             return (0, function_1.pipe)(TE.Do, TE.bind('tags', () => (0, utils_1.execute)((0, git_1.getPreviousTags)(core.getInput('tag-pattern')))), TE.map(({ tags }) => tags.split('\n')), TE.bindTo('splitted'), TE.map(({ splitted }) => (0, utils_1.second)(splitted)));
-        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.map(({ tagRange }) => (0, git_1.getLogs)(tagRange)), TE.bindTo('output'), TE.chain(({ output }) => (0, utils_1.execute)(output[0], output[1])), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
+        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.map(({ tagRange }) => (0, git_1.getLogs)(tagRange)), TE.bindTo('output'), TE.chain(({ output }) => (0, utils_1.execute)(output[0], output[1])), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length !== 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
@@ -252,11 +252,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.second = exports.makeTagRange = exports.getTagPatternInput = exports.liftStringToOption = exports.execute = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
-const Option = __importStar(__nccwpck_require__(2569));
-const TE = __importStar(__nccwpck_require__(437));
 const E = __importStar(__nccwpck_require__(7534));
+const O = __importStar(__nccwpck_require__(2569));
+const TE = __importStar(__nccwpck_require__(437));
 const execute = (command, args) => {
-    return TE.tryCatch(() => innerExec(command, args), err => {
+    return TE.tryCatch(() => __awaiter(void 0, void 0, void 0, function* () { return innerExec(command, args); }), err => {
         if (err instanceof Error) {
             return new Error(err.message);
         }
@@ -278,26 +278,24 @@ const innerExec = (command, args) => __awaiter(void 0, void 0, void 0, function*
 });
 const liftStringToOption = (source) => {
     if (source === '') {
-        return Option.none;
+        return O.none;
     }
     else {
-        return Option.some(source);
+        return O.some(source);
     }
 };
 exports.liftStringToOption = liftStringToOption;
 const getTagPatternInput = (tagPattern) => {
     const pat = (0, exports.liftStringToOption)(tagPattern);
-    return Option.fold(() => '', pat => `--list "${pat}"`)(pat);
+    return O.fold(() => '', p => `--list "${p}"`)(pat);
 };
 exports.getTagPatternInput = getTagPatternInput;
 const makeTagRange = (newTag, preTag) => {
-    console.log('newTag: %j', newTag);
-    console.log('prevTag: %j', preTag);
-    if (Option.isNone(newTag) && Option.isNone(preTag)) {
+    if (O.isNone(newTag) && O.isNone(preTag)) {
         return E.left(new Error('ref or preTag should be filled'));
     }
-    if (Option.isSome(newTag)) {
-        if (Option.isSome(preTag)) {
+    if (O.isSome(newTag)) {
+        if (O.isSome(preTag)) {
             return E.right(`${preTag.value.trim()}...${newTag.value}`);
         }
         else {

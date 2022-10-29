@@ -1,12 +1,14 @@
 import * as core from '@actions/core'
-import * as Option from 'fp-ts/Option'
+
 import * as Either from 'fp-ts/Either'
+import * as Option from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
+
 import {categorize, stringToConventionalKind} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
+import {getLogs, getPreviousTags} from './git'
 import {execute, liftStringToOption, makeTagRange, second} from './utils'
-import {getPreviousTags, getLogs} from './git'
 
 async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
@@ -43,7 +45,7 @@ async function run(): Promise<void> {
       categorize(
         commitLog.split('\n'),
         kind,
-        Option.filter((s: string[]) => s.length != 0)(scopes)
+        Option.filter((s: string[]) => s.length !== 0)(scopes)
       )
     ),
     TE.bindTo('summary'),

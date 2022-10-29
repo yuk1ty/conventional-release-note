@@ -1,19 +1,20 @@
-import {CategorizedSummary} from './classifier'
-import * as Writer from 'fp-ts/Writer'
-import * as TE from 'fp-ts/TaskEither'
 import * as Array from 'fp-ts/Array'
+import * as TE from 'fp-ts/TaskEither'
+import * as Writer from 'fp-ts/Writer'
 import {pipe} from 'fp-ts/lib/function'
+
+import {CategorizedSummary} from './classifier'
 
 type Doc = {
   title: string
   content: string
 }
 
-const appendIfNeeded = (appender: string[], title: string) => {
-  if (appender.length != 0) {
+const appendIfNeeded = (appender: string[], title: string): Doc[] => {
+  if (appender.length !== 0) {
     return [
       {
-        title: title,
+        title,
         content: appender.map(s => `* ${s}`).join('\n')
       }
     ]
