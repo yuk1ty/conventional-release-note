@@ -10,6 +10,13 @@ inputs:
       This option decides what tag you'd like to set as the end of the range.
       The default value is `github.ref_name`, but you can set a specific tag whatever you like.
     default: ${{ github.ref_name }}
+  previous-tag:
+    required: false
+    description: >
+      Sets the previous tag. This will be used in extracting logs in the specific range of tags.
+      Logs are extracted in condition of `${previous-tag}...${current-tag}`.
+      This option decides what tag you'd like to set as the start of the range.
+      You don't need to set this options as usual, but you can set a specific tag whatever you like.
   tag-pattern:
     required: false
     description: >

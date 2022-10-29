@@ -14,15 +14,20 @@ async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
     TE.Do,
     TE.bind('preTag', () => {
-      return pipe(
-        TE.Do,
-        TE.bind('tags', () =>
-          execute(getPreviousTags(core.getInput('tag-pattern')))
-        ),
-        TE.map(({tags}) => tags.split('\n')),
-        TE.bindTo('splitted'),
-        TE.map(({splitted}) => second(splitted))
-      )
+      const passedPrevTag = liftStringToOption(core.getInput('previous-tag'))
+      if (Option.isSome(passedPrevTag)) {
+        return TE.right(passedPrevTag.value)
+      } else {
+        return pipe(
+          TE.Do,
+          TE.bind('tags', () =>
+            execute(getPreviousTags(core.getInput('tag-pattern')))
+          ),
+          TE.map(({tags}) => tags.split('\n')),
+          TE.bindTo('splitted'),
+          TE.map(({splitted}) => second(splitted))
+        )
+      }
     }),
     TE.chain(({preTag}) =>
       TE.fromEither(
