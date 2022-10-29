@@ -23,7 +23,7 @@ describe('getTagPatternInput', () => {
 
   test('returns the specific string with the list option when a string with some values was passed', () => {
     const result = util.getTagPatternInput('v*')
-    expect(result).toStrictEqual("--list 'v*'")
+    expect(result).toStrictEqual('--list "v*"')
   })
 })
 

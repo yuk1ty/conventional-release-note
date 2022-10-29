@@ -3,9 +3,12 @@ import * as Option from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
 import * as E from 'fp-ts/Either'
 
-export const execute = (command: string): TE.TaskEither<Error, string> => {
+export const execute = (
+  command: string,
+  args?: string[]
+): TE.TaskEither<Error, string> => {
   return TE.tryCatch(
-    () => innerExec(command),
+    () => innerExec(command, args),
     err => {
       if (err instanceof Error) {
         return new Error(err.message)
@@ -17,8 +20,8 @@ export const execute = (command: string): TE.TaskEither<Error, string> => {
   )
 }
 
-const innerExec = async (command: string): Promise<string> => {
-  const output = await exec.getExecOutput(command)
+const innerExec = async (command: string, args?: string[]): Promise<string> => {
+  const output = await exec.getExecOutput(command, args)
   if (output.exitCode === 0) {
     return output.stdout
   } else {
@@ -46,6 +49,8 @@ export const makeTagRange = (
   newTag: Option.Option<string>,
   preTag: Option.Option<string>
 ): E.Either<Error, string> => {
+  console.log('newTag: %j', newTag)
+  console.log('prevTag: %j', preTag)
   if (Option.isNone(newTag) && Option.isNone(preTag)) {
     return E.left(new Error('ref or preTag should be filled'))
   }
@@ -57,5 +62,13 @@ export const makeTagRange = (
     }
   } else {
     return E.left(new Error('ref should be filled'))
+  }
+}
+
+export const second = (array: string[]): string => {
+  if (array.length === 0) {
+    return array[0]
+  } else {
+    return array[1]
   }
 }

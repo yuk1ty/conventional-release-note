@@ -141,19 +141,14 @@ exports.generateReleaseNote = generateReleaseNote;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getLogs = exports.getPreviousTag = void 0;
+exports.getLogs = exports.getPreviousTags = void 0;
 const utils_1 = __nccwpck_require__(918);
-const getPreviousTag = (tagPattern) => {
-    const output = `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)}`.split('\n');
-    if (output.length === 1) {
-        return output[0];
-    }
-    else {
-        return output[1];
-    }
-};
-exports.getPreviousTag = getPreviousTag;
-const getLogs = (tagRange) => `git log --oneline --pretty=tformat:\"%s by @%an in %h\" ${tagRange}`;
+const getPreviousTags = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)}`;
+exports.getPreviousTags = getPreviousTags;
+const getLogs = (tagRange) => [
+    'git log',
+    ['--oneline', '--pretty=tformat:"%s by @%an in %h"', tagRange]
+];
 exports.getLogs = getLogs;
 
 
@@ -204,7 +199,9 @@ const utils_1 = __nccwpck_require__(918);
 const git_1 = __nccwpck_require__(3374);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => (0, utils_1.execute)((0, git_1.getPreviousTag)(core.getInput('tag-pattern')))), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogs)(tagRange))), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
+        const program = (0, function_1.pipe)(TE.Do, TE.bind('preTag', () => {
+            return (0, function_1.pipe)(TE.Do, TE.bind('tags', () => (0, utils_1.execute)((0, git_1.getPreviousTags)(core.getInput('tag-pattern')))), TE.map(({ tags }) => tags.split('\n')), TE.bindTo('splitted'), TE.map(({ splitted }) => (0, utils_1.second)(splitted)));
+        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.map(({ tagRange }) => (0, git_1.getLogs)(tagRange)), TE.bindTo('output'), TE.chain(({ output }) => (0, utils_1.execute)(output[0], output[1])), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length != 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
@@ -253,13 +250,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.makeTagRange = exports.getTagPatternInput = exports.liftStringToOption = exports.execute = void 0;
+exports.second = exports.makeTagRange = exports.getTagPatternInput = exports.liftStringToOption = exports.execute = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
 const Option = __importStar(__nccwpck_require__(2569));
 const TE = __importStar(__nccwpck_require__(437));
 const E = __importStar(__nccwpck_require__(7534));
-const execute = (command) => {
-    return TE.tryCatch(() => innerExec(command), err => {
+const execute = (command, args) => {
+    return TE.tryCatch(() => innerExec(command, args), err => {
         if (err instanceof Error) {
             return new Error(err.message);
         }
@@ -270,8 +267,8 @@ const execute = (command) => {
     });
 };
 exports.execute = execute;
-const innerExec = (command) => __awaiter(void 0, void 0, void 0, function* () {
-    const output = yield exec.getExecOutput(command);
+const innerExec = (command, args) => __awaiter(void 0, void 0, void 0, function* () {
+    const output = yield exec.getExecOutput(command, args);
     if (output.exitCode === 0) {
         return output.stdout;
     }
@@ -294,6 +291,8 @@ const getTagPatternInput = (tagPattern) => {
 };
 exports.getTagPatternInput = getTagPatternInput;
 const makeTagRange = (newTag, preTag) => {
+    console.log('newTag: %j', newTag);
+    console.log('prevTag: %j', preTag);
     if (Option.isNone(newTag) && Option.isNone(preTag)) {
         return E.left(new Error('ref or preTag should be filled'));
     }
@@ -310,6 +309,15 @@ const makeTagRange = (newTag, preTag) => {
     }
 };
 exports.makeTagRange = makeTagRange;
+const second = (array) => {
+    if (array.length === 0) {
+        return array[0];
+    }
+    else {
+        return array[1];
+    }
+};
+exports.second = second;
 
 
 /***/ }),

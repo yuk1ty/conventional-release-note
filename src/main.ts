@@ -5,15 +5,23 @@ import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 import {categorize, stringToConventionalKind} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
-import {execute, liftStringToOption, makeTagRange} from './utils'
-import {getPreviousTag, getLogs} from './git'
+import {execute, liftStringToOption, makeTagRange, second} from './utils'
+import {getPreviousTags, getLogs} from './git'
 
 async function run(): Promise<void> {
   const program: TE.TaskEither<Error, string> = pipe(
     TE.Do,
-    TE.bind('preTag', () =>
-      execute(getPreviousTag(core.getInput('tag-pattern')))
-    ),
+    TE.bind('preTag', () => {
+      return pipe(
+        TE.Do,
+        TE.bind('tags', () =>
+          execute(getPreviousTags(core.getInput('tag-pattern')))
+        ),
+        TE.map(({tags}) => tags.split('\n')),
+        TE.bindTo('splitted'),
+        TE.map(({splitted}) => second(splitted))
+      )
+    }),
     TE.chain(({preTag}) =>
       TE.fromEither(
         makeTagRange(
@@ -23,7 +31,9 @@ async function run(): Promise<void> {
       )
     ),
     TE.bindTo('tagRange'),
-    TE.chain(({tagRange}) => execute(getLogs(tagRange))),
+    TE.map(({tagRange}) => getLogs(tagRange)),
+    TE.bindTo('output'),
+    TE.chain(({output}) => execute(output[0], output[1])),
     TE.bindTo('commitLog'),
     TE.bind('kind', () =>
       TE.fromEither(stringToConventionalKind(core.getInput('kind')))
