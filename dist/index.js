@@ -141,15 +141,12 @@ exports.generateReleaseNote = generateReleaseNote;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getLogs = exports.getPreviousTags = void 0;
+exports.getLogsCommand = exports.getPreviousTagsCommand = void 0;
 const utils_1 = __nccwpck_require__(918);
-const getPreviousTags = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)}`;
-exports.getPreviousTags = getPreviousTags;
-const getLogs = (tagRange) => [
-    'git log',
-    ['--oneline', '--pretty=tformat:"%s by @%an in %h"', tagRange]
-];
-exports.getLogs = getLogs;
+const getPreviousTagsCommand = (tagPattern) => `git tag --sort=-creatordate ${(0, utils_1.getTagPatternInput)(tagPattern)}`;
+exports.getPreviousTagsCommand = getPreviousTagsCommand;
+const getLogsCommand = (tagRange) => `git log --oneline --pretty=tformat:\"%s by @%an in %h\" ${tagRange}`;
+exports.getLogsCommand = getLogsCommand;
 
 
 /***/ }),
@@ -205,9 +202,9 @@ function run() {
                 return TE.right(passedPrevTag.value);
             }
             else {
-                return (0, function_1.pipe)(TE.Do, TE.bind('tags', () => (0, utils_1.execute)((0, git_1.getPreviousTags)(core.getInput('tag-pattern')))), TE.map(({ tags }) => tags.split('\n')), TE.bindTo('splitted'), TE.map(({ splitted }) => (0, utils_1.second)(splitted)));
+                return (0, function_1.pipe)(TE.Do, TE.bind('tags', () => (0, utils_1.execute)((0, git_1.getPreviousTagsCommand)(core.getInput('tag-pattern')))), TE.map(({ tags }) => tags.split('\n')), TE.bindTo('splitted'), TE.map(({ splitted }) => (0, utils_1.second)(splitted)));
             }
-        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.map(({ tagRange }) => (0, git_1.getLogs)(tagRange)), TE.bindTo('output'), TE.chain(({ output }) => (0, utils_1.execute)(output[0], output[1])), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length !== 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
+        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogsCommand)(tagRange))), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length !== 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
