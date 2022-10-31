@@ -289,8 +289,12 @@ const liftStringToOption = (source) => {
 };
 exports.liftStringToOption = liftStringToOption;
 const getTagPatternInput = (tagPattern) => {
-    const pat = (0, exports.liftStringToOption)(tagPattern);
-    return O.fold(() => '', p => `--list "${p}"`)(pat);
+    if (tagPattern !== '') {
+        return `--list "${tagPattern}"`;
+    }
+    else {
+        return tagPattern;
+    }
 };
 exports.getTagPatternInput = getTagPatternInput;
 const makeTagRange = (newTag, preTag) => {

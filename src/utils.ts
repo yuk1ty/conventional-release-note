@@ -39,11 +39,11 @@ export const liftStringToOption = (source: string): O.Option<string> => {
 }
 
 export const getTagPatternInput = (tagPattern: string): string => {
-  const pat = liftStringToOption(tagPattern)
-  return O.fold(
-    () => '',
-    p => `--list "${p}"`
-  )(pat)
+  if (tagPattern !== '') {
+    return `--list "${tagPattern}"`
+  } else {
+    return tagPattern
+  }
 }
 
 export const makeTagRange = (
