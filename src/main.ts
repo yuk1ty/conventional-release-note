@@ -5,7 +5,11 @@ import * as Option from 'fp-ts/Option'
 import * as TE from 'fp-ts/TaskEither'
 import {pipe} from 'fp-ts/lib/function'
 
-import {categorize, stringToConventionalKind} from './classifier'
+import {
+  categorize,
+  makeConventionScope,
+  stringToConventionalKind
+} from './classifier'
 import {generateDoc, generateReleaseNote} from './generator'
 import {getLogsCommand, getPreviousTagsCommand} from './git'
 import {execute, liftStringToOption, makeTagRange, second} from './utils'
@@ -43,13 +47,16 @@ async function run(): Promise<void> {
     TE.bind('kind', () =>
       TE.fromEither(stringToConventionalKind(core.getInput('kind')))
     ),
-    TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))),
-    TE.chain(({commitLog, kind, scopes}) =>
-      categorize(
-        commitLog.split('\n'),
-        kind,
-        Option.filter((s: string[]) => s.length !== 0)(scopes)
+    TE.bind('scopes', () =>
+      TE.fromEither(
+        makeConventionScope(
+          Option.of(core.getMultilineInput('scopes')),
+          core.getBooleanInput('include-non-scoped')
+        )
       )
+    ),
+    TE.chain(({commitLog, kind, scopes}) =>
+      categorize(commitLog.split('\n'), kind, scopes)
     ),
     TE.bindTo('summary'),
     TE.chain(({summary}) => generateDoc(summary)),

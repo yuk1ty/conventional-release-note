@@ -28,12 +28,32 @@ jobs:
           git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref_name }}
           echo "ref"
           git log --oneline --pretty=tformat:"%s by @%an in %h" ${PREVIOUS_TAG}...${{ github.ref }}
-      - name: Generated content
+      - name: Generated content (simplest pattern)
         uses: ./
         id: gen_note
         with:
           kind: default
           tag-pattern: test-v*
-          current-tag: ${{ github.ref_name }}
-      - name: Print the release note
+      - name: Print the release note (simplest pattern)
         run: echo "${{ steps.gen_note.outputs.summary }}"
+      - name: Generated content (with previous tag pattern)
+        uses: ./
+        id: gen_note_prev
+        with:
+          kind: default
+          previous-tag: test-v0.1.0
+          current-tag: test-v0.1.1
+          include-non-scoped: false
+      - name: Print the release note (previous tag pattern)
+        run: echo "${{ steps.gen_note_prev.outputs.summary }}"
+      - name: Generated content (with multiple scopes pattern)
+        uses: ./
+        id: gen_note_scope
+        with:
+          kind: default
+          scopes: |
+            one
+            two
+      # The result should be empty
+      - name: Print the release note (multiple scopes pattern)
+        run: echo "${{ steps.gen_note_scope.outputs.summary }}"
