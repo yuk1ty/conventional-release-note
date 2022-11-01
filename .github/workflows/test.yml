@@ -43,6 +43,7 @@ jobs:
           kind: default
           previous-tag: test-v0.1.0
           current-tag: test-v0.1.1
+          include-non-scoped: false
       - name: Print the release note (previous tag pattern)
         run: echo "${{ steps.gen_note_prev.outputs.summary }}"
       - name: Generated content (with multiple scopes pattern)

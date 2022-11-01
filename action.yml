@@ -34,16 +34,41 @@ inputs:
       - feat(core): add a feature
       - feat(util): add a feature
       - feat(debug): add a feature
-      And assume that the following `scopes` set as well:
+      - feat: add a feature
+      And assume that the following `scopes` is set as well:
+      ```
       - scopes |
-        core
-        util
+          core
+          util
+      ```
       Then the following release note will be generated.
       ```
       ## Features
       - feat(core): add a feature
       - feat(util): add a feature
       ```
+  include-non-scoped:
+    required: false
+    description: >
+      This option is for a use case to include commit logs without scopes even if "scopes" option is set. 
+      For example, assume that the following commit logs:
+      - feat(util): add a feature
+      - feat: add a feature
+      - feat(debug): add a feature
+      And assume that the following `scopes` and `include-non-scoped` are set as well:
+      ```
+      - scopes |
+          util
+      - include-non-scoped: true
+      ```
+      Then the following release note will be generated.
+      ```
+      ## Features
+      - feat(util): add a feature
+      - feat: add a feature
+      ```
+    default: "false"
+
 runs:
   using: "node16"
   main: "dist/index.js"

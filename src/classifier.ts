@@ -24,8 +24,23 @@ export const stringToConventionalKind = (
   return E.left(new Error(`"kind" should be ${acceptableKinds.join(',')}`))
 }
 
+export type ConventionalScope = {
+  scopes: O.Option<string[]>
+  includeNonScoped: boolean
+}
+
+export const makeConventionScope = (
+  scopes: O.Option<string[]>,
+  includeNonScoped: boolean
+): E.Either<Error, ConventionalScope> => {
+  return E.right({
+    scopes: O.filter((s: string[]) => s.length !== 0)(scopes),
+    includeNonScoped: includeNonScoped
+  })
+}
+
 const filterLogBy =
-  (scope: O.Option<string[]>, convention: string) => (log: string) => {
+  (scope: ConventionalScope, convention: string) => (log: string) => {
     const extracted = O.fromNullable(
       /([a-z]+)\(?([a-z]+)?\)?: [a-z]+/.exec(log)
     )
@@ -33,15 +48,19 @@ const filterLogBy =
       const _convention = elems[1]
       const _scope: O.Option<string> = O.fromNullable(elems[2])
 
-      if (O.isSome(scope) && O.isSome(_scope)) {
-        return (
-          scope.value.findIndex(s => S.Eq.equals(s, _scope.value)) !== -1 &&
-          S.Eq.equals(convention, _convention)
-        )
-      } else if (O.isNone(scope) && O.isNone(_scope)) {
+      if (scope.includeNonScoped) {
         return S.Eq.equals(convention, _convention)
       } else {
-        return false
+        if (O.isSome(scope.scopes) && O.isSome(_scope)) {
+          return (
+            scope.scopes.value.findIndex(s => S.Eq.equals(s, _scope.value)) !==
+              -1 && S.Eq.equals(convention, _convention)
+          )
+        } else if (O.isNone(scope.scopes) && O.isNone(_scope)) {
+          return S.Eq.equals(convention, _convention)
+        } else {
+          return false
+        }
       }
     })(extracted)
     return O.isSome(filtered)
@@ -50,7 +69,7 @@ const filterLogBy =
 export const categorize = (
   logs: string[],
   kind: ConventionalKind,
-  scope: O.Option<string[]>
+  scope: ConventionalScope
 ): TE.TaskEither<Error, CategorizedSummary> => {
   if (kind === 'default') {
     return pipe(

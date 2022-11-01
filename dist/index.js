@@ -26,7 +26,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.categorize = exports.stringToConventionalKind = void 0;
+exports.categorize = exports.makeConventionScope = exports.stringToConventionalKind = void 0;
 const E = __importStar(__nccwpck_require__(7534));
 const O = __importStar(__nccwpck_require__(2569));
 const S = __importStar(__nccwpck_require__(5189));
@@ -42,20 +42,32 @@ const stringToConventionalKind = (kind) => {
     return E.left(new Error(`"kind" should be ${acceptableKinds.join(',')}`));
 };
 exports.stringToConventionalKind = stringToConventionalKind;
+const makeConventionScope = (scopes, includeNonScoped) => {
+    return E.right({
+        scopes: O.filter((s) => s.length !== 0)(scopes),
+        includeNonScoped: includeNonScoped
+    });
+};
+exports.makeConventionScope = makeConventionScope;
 const filterLogBy = (scope, convention) => (log) => {
     const extracted = O.fromNullable(/([a-z]+)\(?([a-z]+)?\)?: [a-z]+/.exec(log));
     const filtered = O.filter((elems) => {
         const _convention = elems[1];
         const _scope = O.fromNullable(elems[2]);
-        if (O.isSome(scope) && O.isSome(_scope)) {
-            return (scope.value.findIndex(s => S.Eq.equals(s, _scope.value)) !== -1 &&
-                S.Eq.equals(convention, _convention));
-        }
-        else if (O.isNone(scope) && O.isNone(_scope)) {
+        if (scope.includeNonScoped) {
             return S.Eq.equals(convention, _convention);
         }
         else {
-            return false;
+            if (O.isSome(scope.scopes) && O.isSome(_scope)) {
+                return (scope.scopes.value.findIndex(s => S.Eq.equals(s, _scope.value)) !==
+                    -1 && S.Eq.equals(convention, _convention));
+            }
+            else if (O.isNone(scope.scopes) && O.isNone(_scope)) {
+                return S.Eq.equals(convention, _convention);
+            }
+            else {
+                return false;
+            }
         }
     })(extracted);
     return O.isSome(filtered);
@@ -204,7 +216,7 @@ function run() {
             else {
                 return (0, function_1.pipe)(TE.Do, TE.bind('tags', () => (0, utils_1.execute)((0, git_1.getPreviousTagsCommand)(core.getInput('tag-pattern')))), TE.map(({ tags }) => tags.split('\n')), TE.bindTo('splitted'), TE.map(({ splitted }) => (0, utils_1.second)(splitted)));
             }
-        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogsCommand)(tagRange))), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.of(Option.of(core.getMultilineInput('scopes')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, Option.filter((s) => s.length !== 0)(scopes))), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
+        }), TE.chain(({ preTag }) => TE.fromEither((0, utils_1.makeTagRange)((0, utils_1.liftStringToOption)(core.getInput('current-tag')), (0, utils_1.liftStringToOption)(preTag)))), TE.bindTo('tagRange'), TE.chain(({ tagRange }) => (0, utils_1.execute)((0, git_1.getLogsCommand)(tagRange))), TE.bindTo('commitLog'), TE.bind('kind', () => TE.fromEither((0, classifier_1.stringToConventionalKind)(core.getInput('kind')))), TE.bind('scopes', () => TE.fromEither((0, classifier_1.makeConventionScope)(Option.of(core.getMultilineInput('scopes')), core.getBooleanInput('include-non-scoped')))), TE.chain(({ commitLog, kind, scopes }) => (0, classifier_1.categorize)(commitLog.split('\n'), kind, scopes)), TE.bindTo('summary'), TE.chain(({ summary }) => (0, generator_1.generateDoc)(summary)), TE.bindTo('docs'), TE.chain(({ docs }) => (0, generator_1.generateReleaseNote)(docs)));
         Either.match(err => {
             if (err instanceof Error) {
                 core.setFailed(err.message);
