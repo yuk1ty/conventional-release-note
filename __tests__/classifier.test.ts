@@ -107,7 +107,8 @@ describe('categorize function', () => {
     const logs = [
       'feat(data): add a new feature',
       'fix(data): fix a bug',
-      'feat: add another feature'
+      'feat: add another feature',
+      'fix(core): add another fix'
     ]
 
     const runTest = pipe(

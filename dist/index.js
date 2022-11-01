@@ -54,7 +54,7 @@ const filterLogBy = (scope, convention) => (log) => {
     const filtered = O.filter((elems) => {
         const _convention = elems[1];
         const _scope = O.fromNullable(elems[2]);
-        if (scope.includeNonScoped) {
+        if (scope.includeNonScoped && O.isNone(_scope)) {
             return S.Eq.equals(convention, _convention);
         }
         else {
